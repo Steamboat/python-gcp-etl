@@ -43,19 +43,16 @@ Requires a list of tables and their ID columns for deduplication.
 request_to_pubsub.py - Consume a request with a JSON payload.
 Unpack the payload, inspect for a few values, and repack for a PUB/SUB topic.
 
-broker_for_pubsub.py - Pub/Sub will keep trying until an HTTP route returns a 200.
+http_subscriber -  Pub/Sub will keep trying until an HTTP route returns a 200.
 This means that poorly-formed messages can ricochet through the system causing errors to be
 over-represented. This function consumes 400 (Bad Request / validation failed json) and
- 500 (server error) responses and notifies an admin, rather than retrying.
- 
-i_need_an_adult.py - (TODO) So you've gone and done a real bad? Call in the big guns with 3 severity levels:
-1 - annoyances. 2 - onto the engineering queue. 3 - stop everything. May actually be a logging alert...
-
+ 500 (server error) responses and notifies an admin, rather than retrying. Erroneous messages
+are dropped in a dead-letter queue for a later pull subscriber.
 
 <!-- LICENSE -->
 ## License
 
-This project is covered under the Do What The F*ck You Want To Public License. So act accordingly.
+This project is covered under the [Do What The F*ck You Want To Public License](http://www.wtfpl.net/). So act accordingly.
 
 
 <!-- CONTACT -->
