@@ -24,6 +24,7 @@ google-cloud-pubsub
 """
 
 import os
+import json
 import logging
 import base64
 from flask import jsonify
@@ -44,6 +45,15 @@ DEAD_LETTER_TOPIC = os.environ.get('DEAD_LETTER_TOPIC')
 PROJECT_ID = os.environ.get('PROJECT_ID')
 if any([var is None for var in (DEAD_LETTER_TOPIC, PROJECT_ID)]):
     raise EnvironmentError('The following env vars must be specified: DEAD_LETTER_TOPIC, PROJECT_ID')
+
+
+def unpack_event(event):
+    """
+    Get the 'message' and 'data' from a pubsub event
+    """
+    data = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+    attributes = event['attributes']
+    return data, attributes
 
 
 def http_subscriber(event, context):
