@@ -1,0 +1,7 @@
+FROM dpage/pgadmin4:4.26
+
+ARG PORT=80
+ENV PGADMIN_LISTEN_PORT 80
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,0 +1,50 @@
+steps:
+  # Use kaniko cache to speed up builds after the first for the day
+  - name: 'gcr.io/kaniko-project/executor:latest'
+    args:
+      - --destination=gcr.io/$PROJECT_ID/pgadmin:4.26
+      - --cache=true
+      - --cache-ttl=24h
+  # Build: pgadmin:4.26 (development)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-pgadmin:latest'
+    args: [
+      'build', '.',
+      '-f', 'Dockerfile.pgadmin',
+      '--cache-from', 'gcr.io/$PROJECT_ID/pgadmin:4.26',
+      '--build-arg', 'PROJECT_ID=$PROJECT_ID',
+      '-t', 'gcr.io/$PROJECT_ID/pgadmin:4.26'
+    ]
+  # Tag: pgadmin:4.26, pgadmin:latest (dev tags)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'tag-pgadmin-latest'
+    args: [
+        'tag', 'gcr.io/$PROJECT_ID/pgadmin:4.26', 'gcr.io/$PROJECT_ID/pgadmin:latest'
+    ]
+  # Push: pgadmin:4.26
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-pgadmin:4.26'
+    args: [
+      'push',
+      'gcr.io/$PROJECT_ID/pgadmin:4.26'
+    ]
+  # Push: pgadmin:latest
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-pgadmin:latest'
+    args: [
+      'push',
+      'gcr.io/$PROJECT_ID/pgadmin:latest'
+    ]
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'pgadmin-dev-deploy'
+    entrypoint: gcloud
+    args: [
+        'run', 'deploy', 'pgadmin-dev',
+        '--image', 'gcr.io/$PROJECT_ID/pgadmin:latest',
+        '--command', 'sh',
+        '--args', 'boot.sh',
+        '--region', 'us-central1',
+        '--platform', 'managed',
+        '--allow-unauthenticated'
+    ]
