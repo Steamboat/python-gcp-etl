@@ -1,1 +1,1 @@
-from postgres_connector import *
+from etl.postgres_connector import *
