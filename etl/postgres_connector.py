@@ -10,9 +10,10 @@ from google.cloud import secretmanager
 
 
 class Config:
-    PROJECT_ID = os.environ.get('PROJECT_ID')
-    APP_ID = os.environ.get('APP_ID', os.environ.get('SECRET_ID'))
-    SECRET_ID = os.environ.get('SECRET_ID')
+    def __init__(self):
+        self.PROJECT_ID = os.environ.get('PROJECT_ID')
+        self.APP_ID = os.environ.get('APP_ID', os.environ.get('SECRET_ID'))
+        self.SECRET_ID = os.environ.get('SECRET_ID')
 
 
 global_config = Config()
