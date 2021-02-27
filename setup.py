@@ -9,8 +9,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='etl',
-    packages=setuptools.find_packages(),
-    version='0.1.1',
+    packages=setuptools.find_packages('etl'),
+    version='0.1.2',
     description='Templates for building Cloud Function ETL processes',
     long_description=long_description,
     author='Steven Sutton',
