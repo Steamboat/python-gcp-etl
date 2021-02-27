@@ -8,9 +8,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 
 setuptools.setup(
-    name='python-gcp-etl',
+    name='etl',
     packages=setuptools.find_packages(),
-    version='0.1.0',
+    version='0.1.1',
     description='Templates for building Cloud Function ETL processes',
     long_description=long_description,
     author='Steven Sutton',
