@@ -61,7 +61,6 @@ class BigQueryConnector:
         Then push an update to bigquery.
         """
         bq_table_loc = self.bq_table_loc(bq_table_name)
-        print('bq_table_loc', bq_table_loc)
         sql = f"SELECT {id_col_name} FROM `{bq_table_loc}`"
         try:
             # Read the existing data from gbq
@@ -76,7 +75,7 @@ class BigQueryConnector:
                 raise
         # If any data remains, sync it into the remote table
         if table_df.shape[0] > 0:
-            pandas_gbq.to_gbq(table_df, destination_table=bq_table_loc,
+            pandas_gbq.to_gbq(table_df, destination_table=bq_table_name,
                               project_id=global_config.PROJECT_ID,
                               if_exists="append")
 
@@ -469,7 +468,6 @@ def push_to_lake(event, context):
         table = table_cfg['name']
         logger.info(f"processing table {table}")
         bq_table = f"{secrets['OUT_BQ_DATASET']}_lake.{table}"
-        print('bq_table', bq_table)
         id_col = table_cfg['id_col']
         bq = BigQueryConnector()
         try:
