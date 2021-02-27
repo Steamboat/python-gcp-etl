@@ -1,12 +1,9 @@
 import os
-import json
 import time
 import logging
 import psycopg2
 import sqlalchemy
-from sqlalchemy import event
-import alembic.config
-from datetime import datetime, timedelta
+from flask import jsonify
 import pandas as pd
 import pandas_gbq
 from google.cloud import secretmanager
@@ -445,6 +442,47 @@ def get_adgroup_df(ads_df, num_days=90):
     return adgroup_df
 
 
+def push_to_lake(event, context):
+    """
+    Push a batch of data to the data lake
+    """
+    logger.info("loading secrets")
+    secrets = load_secrets()
+    logger.info("secrets loaded")
+    table_data = [{'name': 'user', 'id_col': 'id'},
+                  {'name': 'email', 'id_col': 'id'},
+                  {'name': 'layout', 'id_col': 'id'},
+                  {'name': 'product', 'id_col': 'id'},
+                  {'name': 'experiment', 'id_col': 'id'},
+                  {'name': 'recipe', 'id_col': 'id'},
+                  {'name': 'event', 'id_col': 'id'},
+                  {'name': 'address', 'id_col': 'address_id'},
+                  {'name': 'contact', 'id_col': 'id'},
+                  {'name': 'mailinglist', 'id_col': 'id'},
+                  {'name': 'survey', 'id_col': 'survey_id'},
+                  {'name': 'coupon', 'id_col': 'id'},
+                  {'name': 'order', 'id_col': 'order_id'},
+                  {'name': 'post', 'id_col': 'id'}]
+    for table_cfg in table_data:
+        table = table_cfg['name']
+        logger.info(f"processing table {table}")
+        bq_table = f"{secrets['OUT_BQ_DATASET']}_lake.{table}"
+        id_col = table_cfg['id_col']
+        bq = BigQueryConnector()
+        try:
+            table_df = pd.read_sql_table(table, secrets['DATABASE_URL'])
+            if table == "user":
+                table_df = table_df.drop(columns="password_hash")
+            # Sort by timestamp if the option is available
+            if "timestamp" in list(table_df.columns):
+                table_df = table_df.sort_values(by=["timestamp"], ascending=False)
+            if table_df.shape[0] > 0:
+                logger.info(f"migrating table: {table}")
+                bq.update_table(table_df=table_df, bq_table_name=bq_table, id_col_name=id_col)
+        except ValueError as err:
+            logger.warning(f"ValueError: {err}")
+
+
 def push_to_warehouse(event, context):
     logger.info('downloading tables...')
     pf = ProdFollower()
@@ -486,3 +524,28 @@ def push_to_warehouse(event, context):
             gbq.replace_table(bq_table_name=f"{table_dict['name']}-{time_span}", table_df=table_dict['df'])
 
     print("Done!")
+
+
+def get_new_renders(request):
+    """
+    Get renders for purchases or demos that need to be printed
+    """
+    request_json = request.get_json(silent=True)
+    # Ensure that the request UID matches the secret
+    secrets = load_secrets()
+    if secrets['DOWNLOADER_UID'] != request_json.get('DOWNLOADER_UID'):
+        return jsonify({'success': False, 'message': 'Error: invalid DOWNLOADER_UID'})
+    num_days = request_json.get('num_days', 3)
+    logger.info('downloading tables...')
+    pf = ProdFollower()
+    pf.start()
+    pf.update(is_replace=False)
+    product_df = pf.get_table('product')
+    order_df = pf.get_table('order')
+    user_df = pf.get_table('user')
+    address_df = pf.get_table('address')
+    logger.info('gathering render data...')
+    renders_df = get_renders_df(product_df, order_df, user_df, address_df, num_days=num_days)
+    # Export the bulk data to json
+    out_json = renders_df.to_json(orient='records', date_format='epoch', date_unit='s', indent=4)
+    return out_json
