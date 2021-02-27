@@ -1,0 +1,8 @@
+graft cloudbuild
+graft etl
+graft tests
+
+include README.md
+include pyproject.toml
+
+global-exclude *.py[cod] __pycache__/* *.so *.dylib
