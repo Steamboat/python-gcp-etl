@@ -47,7 +47,7 @@ class BigQueryConnector:
         self.bq_dataset = f"{secrets['OUT_BQ_DATASET']}_{bq_destination}"
 
     def bq_table_loc(self, base_name):
-        return f"{self.bq_dataset}.{base_name}"
+        return f"{self.project_id}.{base_name}"
 
     def replace_table(self, bq_table_name, table_df):
         pandas_gbq.to_gbq(table_df,
