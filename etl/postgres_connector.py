@@ -494,12 +494,6 @@ def push_to_warehouse(event, context):
     order_df = pf.get_table('order')
     user_df = pf.get_table('user')
     address_df = pf.get_table('address')
-    contact_df = pf.get_table('contact')
-    post_df = pf.get_table('post')
-    event_df = pf.get_table('event')
-    email_df = pf.get_table('email')
-    recipe_df = pf.get_table('recipe')
-    layout_df = pf.get_table('layout')
     # Hook into BigQuery and prep for uploads. Upload tables for ranges of 1, 7, 14, 28, and 90 days before today.
     gbq = BigQueryConnector(bq_destination='warehouse')
     logger.info('pushing to gbq...')
@@ -517,7 +511,8 @@ def push_to_warehouse(event, context):
             {'name': 'nav_df', 'df': nav_df},
             {'name': 'device_df', 'df': device_df},
             {'name': 'ads_df', 'df': ads_df},
-            {'name': 'adgroup_df', 'df': adgroup_df}
+            {'name': 'adgroup_df', 'df': adgroup_df},
+            {'name': 'renders_df', 'df': renders_df}
         ]
         for table_dict in dw_tables:
             logger.info(
